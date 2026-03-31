@@ -45,14 +45,14 @@
         .btn-line {
             width: 100%; background: var(--green); color: #000; border: none; padding: 16px 24px;
             font-size: 16px; font-weight: 700; border-radius: 14px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
         }
-        .btn-line:hover { background: var(--green-dark); box-shadow: 0 0 15px var(--green-glow); }
-        .btn-line:disabled { background: #2a3a2f; color: var(--muted); cursor: not-allowed; }
+        .btn-line:disabled { background: #2a3a2f; color: var(--muted); }
         #auto-loading { display: none; flex-direction: column; align-items: center; gap: 16px; padding: 20px 0; }
         #auto-loading.show { display: flex; }
         .auto-spinner { width: 48px; height: 48px; border: 3px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        #debug-log { margin-top: 20px; font-size: 11px; color: var(--muted); background: var(--surface2); padding: 12px; border-radius: 10px; max-height: 80px; overflow-y: auto; display: none; }
     </style>
 </head>
 <body>
@@ -63,8 +63,8 @@
         <div style="font-size: 13px; font-weight: 500; color: var(--muted);">LINE REGISTRATION</div>
     </div>
 
-    <h1>ลงทะเบียน<br><span>ด้วยบัญชี LINE</span></h1>
-    <p class="subtitle">กรุณากดปุ่มเพื่อเข้าสู่ระบบและยืนยันตัวตน</p>
+    <h1>ลงทะเบียน<br><span>ด้วย LINE</span></h1>
+    <p class="subtitle">เชื่อมต่อบัญชีเพื่อยืนยันตัวตน</p>
 
     <div class="steps">
         <div class="step active"><div class="step-num">1</div><div class="step-label">Login</div></div>
@@ -76,56 +76,37 @@
 
     <div id="auto-loading">
         <div class="auto-spinner"></div>
-        <div id="loading-text" style="font-size: 14px; color: var(--muted);">กำลังประมวลผล...</div>
+        <div style="font-size: 14px; color: var(--muted);">กำลังบันทึกข้อมูล...</div>
     </div>
 
-    <button class="btn-line" id="registerBtn" onclick="handleLogin()">
-        <span class="btn-text">เข้าสู่ระบบด้วย LINE</span>
+    <button class="btn-line" id="registerBtn" onclick="registerWithLine()">
+        <span class="btn-text">เชื่อมต่อ LINE Profile</span>
     </button>
+
+    <div id="debug-log"></div>
 </div>
 
 <script>
     const CONFIG = {
-        LIFF_ID: "2009659582-Yhx9Jeyc", 
+        LIFF_ID: "2009659582-Yhx9Jeyc",
         API_URL: "https://changable-clarita-hardheadedly.ngrok-free.dev/line/register",
         PROFILE_PAGE: "Profile.html"
     };
 
-    // 1. Initialize LIFF อย่างเดียว ไม่สั่ง Login อัตโนมัติ
     window.addEventListener('load', async () => {
         try {
             await liff.init({ liffId: CONFIG.LIFF_ID });
-            
-            // ถ้า Browser มี session ค้างอยู่แล้วและยังไม่ได้บันทึกข้อมูล (Register) 
-            // จะข้ามไปขั้นตอนบันทึกข้อมูลเลย หรือจะให้กดใหม่ก็ได้
-            if (liff.isLoggedIn()) {
-                console.log("Logged in already");
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            } else {
+                document.getElementById('registerBtn').style.display = 'none';
+                document.getElementById('auto-loading').classList.add('show');
+                await registerWithLine(true);
             }
-        } catch (err) { 
-            console.error("LIFF Init Error:", err); 
-        }
+        } catch (err) { console.error(err); }
     });
 
-    // 2. ฟังก์ชันเมื่อกดปุ่ม (Manual Login)
-    async function handleLogin() {
-        if (!liff.isLoggedIn()) {
-            // สั่ง Login โดยไม่ใช้ Login อัตโนมัติ 
-            // ผู้ใช้จะเจอหน้ากรอก Email/Password หรือเลือกกดปุ่ม Login ด้วยแอป LINE
-            liff.login(); 
-        } else {
-            // ถ้าล็อกอินค้างไว้แล้ว ให้เริ่มกระบวนการลงทะเบียน
-            startRegistration();
-        }
-    }
-
-    // แยกส่วนการดึง Profile และส่ง API
-    async function startRegistration() {
-        const btn = document.getElementById('registerBtn');
-        const loading = document.getElementById('auto-loading');
-        
-        btn.style.display = 'none';
-        loading.classList.add('show');
-
+    async function registerWithLine(isAuto = false) {
         try {
             const profile = await liff.getProfile();
             const payload = {
@@ -148,24 +129,10 @@
                 }));
                 window.location.href = CONFIG.PROFILE_PAGE;
             } else {
-                throw new Error('บันทึกข้อมูลไม่สำเร็จ');
+                alert('บันทึกข้อมูลไม่สำเร็จ');
             }
-        } catch (err) { 
-            alert(err.message);
-            btn.style.display = 'flex';
-            loading.classList.remove('show');
-        }
+        } catch (err) { alert(err.message); }
     }
-
-    // ตรวจสอบหลังจาก Redirect กลับมาจากหน้า Login ของ LINE
-    window.addEventListener('load', () => {
-        // ตรวจสอบว่าพึ่งกลับมาจากการ Login สำเร็จหรือไม่
-        const urlParams = new URLSearchParams(window.location.search);
-        if (liff.isLoggedIn()) {
-             // ถ้าล็อกอินแล้ว ให้รันบันทึกข้อมูลเลย (เพราะผู้ใช้กด Login มาแล้ว)
-             startRegistration();
-        }
-    });
 </script>
 </body>
 </html>
