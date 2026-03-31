@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, 'Kanit', sans-serif;
+            background-color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh;
+        }
+        .login-container { width: 100%; max-width: 400px; padding: 40px; text-align: center; }
+        .line-logo { color: #06C755; font-size: 42px; font-weight: 800; margin-bottom: 40px; letter-spacing: -1px; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        input {
+            width: 100%; border: none; border-bottom: 1px solid #ddd; padding: 12px 0;
+            font-size: 16px; outline: none; transition: 0.3s;
+        }
+        input:focus { border-bottom: 2px solid #06C755; }
+        .btn-login {
+            width: 100%; background-color: #d1d8df; color: #fff; border: none;
+            border-radius: 4px; padding: 16px; font-size: 16px; font-weight: bold;
+            cursor: not-allowed; margin-top: 30px;
+        }
+        .btn-login.active { background-color: #06C755; cursor: pointer; }
+        .divider { display: flex; align-items: center; margin: 40px 0; color: #ccc; font-size: 12px; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #eee; }
+        .divider span { padding: 0 10px; }
+        .btn-qr {
+            width: 100%; background: #fff; border: 1px solid #ddd; padding: 12px;
+            border-radius: 4px; font-size: 14px; font-weight: 500; cursor: pointer;
+        }
+        .btn-qr span { color: #ff5722; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="line-logo">LINE</div>
+        <form id="manualLoginForm">
+            <div class="form-group"><input type="text" id="email" placeholder="Email address"></div>
+            <div class="form-group"><input type="password" id="password" placeholder="Password"></div>
+            <button type="submit" class="btn-login" id="submitBtn" disabled>Log in</button>
+        </form>
+        <div class="divider"><span>or try another login method</span></div>
+        <button class="btn-qr"><span>NEW</span> QR code login</button>
+    </div>
+
+    <script>
+        const email = document.getElementById('email');
+        const pass = document.getElementById('password');
+        const btn = document.getElementById('submitBtn');
+
+        [email, pass].forEach(input => {
+            input.addEventListener('input', () => {
+                if(email.value && pass.value) {
+                    btn.classList.add('active'); btn.disabled = false;
+                } else {
+                    btn.classList.remove('active'); btn.disabled = true;
+                }
+            });
+        });
+
+        document.getElementById('manualLoginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            // จำลองการดึงชื่อจาก Email เพื่อไปแสดงใน Profile
+            const mockName = email.value.split('@')[0];
+            sessionStorage.setItem('line_profile', JSON.stringify({
+                display_name: mockName,
+                picture_url: '',
+                user_id: 'ID-' + Math.floor(Math.random() * 1000000)
+            }));
+            window.location.href = 'Profile.html';
+        });
+    </script>
+</body>
+</html>

@@ -3,125 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบลงทะเบียน LINE</title>
+    <title>ลงทะเบียน LINE</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        /* CSS เดิมของคุณ */
-        :root {
-            --green: #06C755; --green-dark: #04a344; --green-glow: rgba(6, 199, 85, 0.35);
-            --bg: #0a0f0d; --surface: #111a14; --surface2: #172019;
-            --border: rgba(6, 199, 85, 0.18); --text: #e8f5ec; --muted: #7a9e82;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Kanit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; }
-        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 44px 36px; width: 90%; max-width: 400px; z-index: 1; box-shadow: 0 32px 64px rgba(0,0,0,0.5); }
-        h1 { font-size: 26px; font-weight: 700; margin-bottom: 10px; }
+        :root { --green: #06C755; --bg: #0a0f0d; --surface: #111a14; --text: #e8f5ec; --muted: #7a9e82; }
+        body { font-family: 'Kanit', sans-serif; background: var(--bg); color: var(--text); display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .card { background: var(--surface); border: 1px solid rgba(6,199,85,0.2); border-radius: 24px; padding: 40px; width: 90%; max-width: 400px; text-align: center; }
         h1 span { color: var(--green); }
-        .subtitle { font-size: 14px; color: var(--muted); margin-bottom: 32px; }
-        .btn-line { width: 100%; background: var(--green); color: #000; border: none; padding: 16px 24px; font-size: 16px; font-weight: 700; border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        #auto-loading { display: none; flex-direction: column; align-items: center; gap: 16px; padding: 20px 0; }
-        #auto-loading.show { display: flex; }
-        .auto-spinner { width: 48px; height: 48px; border: 3px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .btn-line { width: 100%; background: var(--green); color: #000; border: none; padding: 16px; border-radius: 14px; font-weight: 700; cursor: pointer; margin-top: 20px; }
+        #loading { display: none; margin: 20px 0; }
+        .spinner { width: 30px; height: 30px; border: 3px solid rgba(6,199,85,0.2); border-top-color: var(--green); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+    <div class="card">
+        <h1>ลงทะเบียน<br><span>ด้วย LINE</span></h1>
+        <p style="color: var(--muted); margin: 15px 0;">เชื่อมต่อโปรไฟล์เพื่อเริ่มใช้งาน</p>
+        
+        <div id="loading">
+            <div class="spinner"></div>
+            <p style="font-size: 12px; margin-top: 10px;">กำลังดำเนินการ...</p>
+        </div>
 
-<div class="card">
-    <div class="logo-wrap">
-        <div style="font-size: 13px; font-weight: 500; color: var(--muted);">LINE REGISTRATION</div>
+        <button class="btn-line" id="regBtn" onclick="startLiff()">เชื่อมต่อ LINE Profile</button>
+        <button id="manualBtn" style="display:none; background:none; border:none; color:var(--muted); margin-top:15px; cursor:pointer; text-decoration:underline;" onclick="window.location.href='Login.html'">ใช้ Email/Password แทน</button>
     </div>
 
-    <h1>ลงทะเบียน<br><span>ด้วย LINE</span></h1>
-    <p class="subtitle" id="status-text">กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ</p>
+    <script>
+        const CONFIG = {
+            LIFF_ID: "2009659582-Yhx9Jeyc",
+            API_URL: "https://changable-clarita-hardheadedly.ngrok-free.dev/line/register"
+        };
 
-    <div id="auto-loading">
-        <div class="auto-spinner"></div>
-        <div style="font-size: 14px; color: var(--muted);">กำลังบันทึกข้อมูล...</div>
-    </div>
+        async function startLiff() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('regBtn').style.display = 'none';
 
-    <button class="btn-line" id="loginBtn" onclick="handleLogin()">
-        <span class="btn-text">เข้าสู่ระบบด้วย LINE</span>
-    </button>
-</div>
-
-<script>
-    const CONFIG = {
-        LIFF_ID: "2009659582-Yhx9Jeyc",
-        API_URL: "http://localhost:8000/api/line/register",
-        PROFILE_PAGE: "Profile.html"
-    };
-
-    // 1. เริ่มต้น LIFF เมื่อโหลดหน้าเว็บ
-    window.addEventListener('load', async () => {
-        try {
-            await liff.init({ liffId: CONFIG.LIFF_ID });
-            
-            // ตรวจสอบว่าล็อกอินค้างไว้หรือไม่
-            if (liff.isLoggedIn()) {
-                showLoading();
-                await registerWithLine();
+            try {
+                await liff.init({ liffId: CONFIG.LIFF_ID });
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                } else {
+                    const profile = await liff.getProfile();
+                    await sendToApi(profile);
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('manualBtn').style.display = 'block';
+                alert("LIFF ไม่ทำงาน: กำลังเปิดโหมดกรอกข้อมูลเอง");
             }
-        } catch (err) {
-            console.error("LIFF Init Error:", err);
         }
-    });
 
-    // 2. ฟังก์ชันเมื่อผู้ใช้กดปุ่ม Login (จะเด้งไปหน้ากรอก User/Pass)
-    function handleLogin() {
-        // liff.login() จะเด้งไปหน้าล็อกอินมาตรฐานของ LINE ทันที
-        // ผู้ใช้สามารถกรอก Email/Password หรือสแกน QR ก็ได้
-        liff.login();
-    }
-
-    // 3. ฟังก์ชันดึง Profile และส่งข้อมูลไป Backend
-    async function registerWithLine() {
-        try {
-            const profile = await liff.getProfile();
-            
-            const payload = {
-                line_user_id: profile.userId,
-                display_name: profile.displayName,
-                picture_url: profile.pictureUrl || null
-            };
-
-            const response = await fetch(CONFIG.API_URL, {
+        async function sendToApi(profile) {
+            const res = await fetch(CONFIG.API_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    line_user_id: profile.userId,
+                    display_name: profile.displayName,
+                    picture_url: profile.pictureUrl
+                })
             });
 
-            if (response.ok) {
-                // เก็บข้อมูลลง Session และไปหน้า Profile
+            if (res.ok) {
                 sessionStorage.setItem('line_profile', JSON.stringify({
-                    user_id: profile.userId,
                     display_name: profile.displayName,
-                    picture_url: profile.pictureUrl || ''
+                    picture_url: profile.pictureUrl,
+                    user_id: profile.userId
                 }));
-                window.location.href = CONFIG.PROFILE_PAGE;
-            } else {
-                alert('บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่');
-                hideLoading();
+                window.location.href = 'Profile.html';
             }
-        } catch (err) {
-            alert("Error: " + err.message);
-            hideLoading();
         }
-    }
-
-    function showLoading() {
-        document.getElementById('loginBtn').style.display = 'none';
-        document.getElementById('auto-loading').classList.add('show');
-        document.getElementById('status-text').textContent = "กำลังยืนยันตัวตน...";
-    }
-
-    function hideLoading() {
-        document.getElementById('loginBtn').style.display = 'flex';
-        document.getElementById('auto-loading').classList.remove('show');
-        document.getElementById('status-text').textContent = "กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ";
-    }
-</script>
+    </script>
 </body>
 </html>
