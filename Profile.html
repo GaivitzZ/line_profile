@@ -55,6 +55,15 @@
         .info-value { font-size: 13px; font-weight: 500; word-break: break-all; }
         .info-value.mono { font-family: monospace; font-size: 12px; color: var(--green); }
         .info-value.url  { font-size: 11px; color: var(--muted); font-family: monospace; }
+        .btn-save { width: 100%; background: var(--green); color: #000; border: none; padding: 14px; font-size: 15px; font-weight: 700; font-family: 'Kanit', sans-serif; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; transition: background 0.2s; }
+        .btn-save:hover:not(:disabled) { background: #04a344; }
+        .btn-save:disabled { background: #2a3a2f; color: var(--muted); cursor: not-allowed; }
+        .btn-save .btn-spinner { display: none; width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        .btn-save.loading .btn-spinner { display: block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #toast { display: none; margin-bottom: 10px; border-radius: 12px; padding: 14px 16px; font-size: 14px; font-weight: 600; text-align: center; }
+        #toast.success { background: rgba(6,199,85,0.12); border: 1px solid rgba(6,199,85,0.3); color: var(--green); }
+        #toast.error   { background: rgba(255,80,80,0.1);  border: 1px solid rgba(255,80,80,0.3);  color: #ff6b6b; }
         .btn-logout { width: 100%; background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 12px; border-radius: 12px; cursor: pointer; font-family: 'Kanit', sans-serif; font-size: 14px; transition: border-color 0.2s, color 0.2s; }
         .btn-logout:hover { border-color: rgba(6,199,85,0.3); color: var(--text); }
     </style>
@@ -101,6 +110,12 @@
         </div>
     </div>
 
+    <button class="btn-save" id="saveBtn" onclick="saveToDb()">
+        <div class="btn-spinner"></div>
+        <span id="saveText">💾 บันทึก</span>
+    </button>
+    <div id="toast"></div>
+
     <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
 </div>
 
@@ -131,6 +146,56 @@
         sessionStorage.clear();
         try { if (liff.isLoggedIn && liff.isLoggedIn()) liff.logout(); } catch(e) {}
         window.location.href = "Registration.html";
+    }
+
+    async function saveToDb() {
+        const stored = sessionStorage.getItem('line_profile');
+        if (!stored) return;
+        const data = JSON.parse(stored);
+
+        const btn   = document.getElementById('saveBtn');
+        const toast = document.getElementById('toast');
+
+        btn.disabled = true;
+        btn.classList.add('loading');
+        document.getElementById('saveText').textContent = 'กำลังบันทึก...';
+        toast.style.display = 'none';
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/line/register', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id:      data.user_id,
+                    display_name: data.display_name,
+                    picture_url:  data.picture_url || null
+                })
+            });
+
+            const result = await response.json().catch(() => ({}));
+
+            if (response.ok) {
+                toast.className = 'success';
+                toast.textContent = '✅ บันทึกสำเร็จ!';
+                toast.style.display = 'block';
+                document.getElementById('saveText').textContent = '✓ บันทึกแล้ว';
+            } else {
+                const errMsg = result.detail || result.message || `HTTP ${response.status}`;
+                toast.className = 'error';
+                toast.textContent = `❌ บันทึกไม่สำเร็จ: ${errMsg}`;
+                toast.style.display = 'block';
+                btn.disabled = false;
+                document.getElementById('saveText').textContent = '💾 บันทึก';
+            }
+        } catch (err) {
+            toast.className = 'error';
+            toast.textContent = `❌ เกิดข้อผิดพลาด: ${err.message}`;
+            toast.style.display = 'block';
+            btn.disabled = false;
+            document.getElementById('saveText').textContent = '💾 บันทึก';
+        } finally {
+            btn.classList.remove('loading');
+        }
     }
 </script>
 </body>
