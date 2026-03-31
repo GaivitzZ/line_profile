@@ -145,7 +145,7 @@
     function logout() {
         sessionStorage.clear();
         try { if (liff.isLoggedIn && liff.isLoggedIn()) liff.logout(); } catch(e) {}
-        window.location.href = "Registration.html";
+        window.location.href = "Login.html";
     }
 
     async function saveToDb() {
