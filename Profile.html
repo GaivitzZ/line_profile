@@ -12,32 +12,93 @@
             --border: rgba(6, 199, 85, 0.18); --text: #e8f5ec; --muted: #7a9e82;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Kanit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 28px; padding: 40px; width: 90%; max-width: 400px; text-align: center; }
-        .avatar-ring-wrap { position: relative; width: 100px; height: 100px; margin: 0 auto 20px; }
-        .avatar-img { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--green); object-fit: cover; }
-        .display-name { font-size: 24px; font-weight: 700; color: var(--green); margin-bottom: 20px; }
-        .info-row { background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 15px; margin-bottom: 10px; text-align: left; }
-        .info-label { font-size: 10px; color: var(--muted); text-transform: uppercase; margin-bottom: 5px; }
-        .info-value { font-size: 13px; word-break: break-all; }
-        .btn-logout { width: 100%; background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 12px; border-radius: 12px; cursor: pointer; margin-top: 20px; }
+        body {
+            font-family: 'Kanit', sans-serif; background: var(--bg); color: var(--text);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        }
+        body::before {
+            content: ''; position: fixed; width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(6,199,85,0.06) 0%, transparent 70%);
+            top: -100px; left: 50%; transform: translateX(-50%); pointer-events: none;
+        }
+        .card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 28px;
+            padding: 40px 36px; width: 90%; max-width: 400px;
+            position: relative; z-index: 1;
+            box-shadow: 0 32px 64px rgba(0,0,0,0.5);
+            animation: slideUp 0.5s cubic-bezier(.22,1,.36,1) both;
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+        .card::before {
+            content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--green), transparent);
+        }
+        .success-badge {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: rgba(6,199,85,0.1); border: 1px solid rgba(6,199,85,0.25);
+            border-radius: 99px; padding: 8px 18px; margin: 0 auto 28px; width: fit-content;
+        }
+        .check-icon { width: 20px; height: 20px; background: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #000; font-weight: 700; }
+        .success-badge span { font-size: 13px; font-weight: 600; color: var(--green); }
+        .avatar-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 28px; }
+        .avatar-wrap { position: relative; width: 90px; height: 90px; margin-bottom: 14px; }
+        .avatar-ring { position: absolute; inset: -3px; border-radius: 50%; background: conic-gradient(var(--green) 0deg, transparent 90deg, var(--green) 180deg, transparent 270deg, var(--green) 360deg); animation: spinRing 4s linear infinite; }
+        @keyframes spinRing { to { transform: rotate(360deg); } }
+        .avatar-ring-mask { position: absolute; inset: 1px; background: var(--surface); border-radius: 50%; }
+        .avatar-img { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: none; }
+        .avatar-placeholder { position: absolute; inset: 0; z-index: 2; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 32px; }
+        .display-name { font-size: 22px; font-weight: 700; color: var(--green); }
+        .info-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+        .info-row { background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; }
+        .info-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(6,199,85,0.08); border: 1px solid rgba(6,199,85,0.15); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .info-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 3px; }
+        .info-value { font-size: 13px; font-weight: 500; word-break: break-all; }
+        .info-value.mono { font-family: monospace; font-size: 12px; color: var(--green); }
+        .info-value.url  { font-size: 11px; color: var(--muted); font-family: monospace; }
+        .btn-logout { width: 100%; background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 12px; border-radius: 12px; cursor: pointer; font-family: 'Kanit', sans-serif; font-size: 14px; transition: border-color 0.2s, color 0.2s; }
+        .btn-logout:hover { border-color: rgba(6,199,85,0.3); color: var(--text); }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <div class="avatar-ring-wrap">
-        <img class="avatar-img" id="avatar-img" src="https://via.placeholder.com/100" alt="avatar" />
+    <div class="success-badge">
+        <div class="check-icon">✓</div>
+        <span>Login สำเร็จแล้ว</span>
     </div>
-    <div class="display-name" id="display-name">Loading...</div>
 
-    <div class="info-row">
-        <div class="info-label">User ID</div>
-        <div class="info-value" id="info-user-id">—</div>
+    <div class="avatar-section">
+        <div class="avatar-wrap">
+            <div class="avatar-ring"></div>
+            <div class="avatar-ring-mask"></div>
+            <div class="avatar-placeholder" id="avatar-placeholder">👤</div>
+            <img class="avatar-img" id="avatar-img" src="" alt="avatar" />
+        </div>
+        <div class="display-name" id="display-name">—</div>
     </div>
-    <div class="info-row">
-        <div class="info-label">Picture URL</div>
-        <div class="info-value" id="info-picture-url" style="font-size: 10px;">—</div>
+
+    <div class="info-list">
+        <div class="info-row">
+            <div class="info-icon">🏷</div>
+            <div>
+                <div class="info-label">display_name</div>
+                <div class="info-value" id="val-display-name">—</div>
+            </div>
+        </div>
+        <div class="info-row">
+            <div class="info-icon">🔑</div>
+            <div>
+                <div class="info-label">user_id</div>
+                <div class="info-value mono" id="val-user-id">—</div>
+            </div>
+        </div>
+        <div class="info-row">
+            <div class="info-icon">🖼</div>
+            <div style="min-width:0;flex:1;">
+                <div class="info-label">picture_url</div>
+                <div class="info-value url" id="val-picture-url">—</div>
+            </div>
+        </div>
     </div>
 
     <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
@@ -46,20 +107,29 @@
 <script>
     window.addEventListener('load', () => {
         const stored = sessionStorage.getItem('line_profile');
-        if (stored) {
-            const data = JSON.parse(stored);
-            document.getElementById('display-name').textContent = data.display_name;
-            document.getElementById('info-user-id').textContent = data.user_id;
-            document.getElementById('info-picture-url').textContent = data.picture_url;
-            if (data.picture_url) document.getElementById('avatar-img').src = data.picture_url;
-        } else {
+        if (!stored) {
             window.location.href = "Registration.html";
+            return;
         }
+
+        const data = JSON.parse(stored);
+
+        if (data.picture_url) {
+            const img = document.getElementById('avatar-img');
+            img.src = data.picture_url;
+            img.style.display = 'block';
+            img.onload = () => document.getElementById('avatar-placeholder').style.display = 'none';
+        }
+
+        document.getElementById('display-name').textContent     = data.display_name || '—';
+        document.getElementById('val-display-name').textContent = data.display_name || '—';
+        document.getElementById('val-user-id').textContent      = data.user_id      || '—';
+        document.getElementById('val-picture-url').textContent  = data.picture_url  || '(ไม่มีรูป)';
     });
 
     function logout() {
         sessionStorage.clear();
-        liff.logout();
+        try { if (liff.isLoggedIn && liff.isLoggedIn()) liff.logout(); } catch(e) {}
         window.location.href = "Registration.html";
     }
 </script>
