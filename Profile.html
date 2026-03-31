@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรไฟล์ LINE</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green: #06C755; --bg: #0a0f0d; --surface: #111a14; --surface2: #172019;
+            --border: rgba(6, 199, 85, 0.18); --text: #e8f5ec; --muted: #7a9e82;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Kanit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 28px; padding: 40px; width: 90%; max-width: 400px; text-align: center; }
+        .avatar-ring-wrap { position: relative; width: 100px; height: 100px; margin: 0 auto 20px; }
+        .avatar-img { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--green); object-fit: cover; }
+        .display-name { font-size: 24px; font-weight: 700; color: var(--green); margin-bottom: 20px; }
+        .info-row { background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 15px; margin-bottom: 10px; text-align: left; }
+        .info-label { font-size: 10px; color: var(--muted); text-transform: uppercase; margin-bottom: 5px; }
+        .info-value { font-size: 13px; word-break: break-all; }
+        .btn-logout { width: 100%; background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 12px; border-radius: 12px; cursor: pointer; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="avatar-ring-wrap">
+        <img class="avatar-img" id="avatar-img" src="https://via.placeholder.com/100" alt="avatar" />
+    </div>
+    <div class="display-name" id="display-name">Loading...</div>
+
+    <div class="info-row">
+        <div class="info-label">User ID</div>
+        <div class="info-value" id="info-user-id">—</div>
+    </div>
+    <div class="info-row">
+        <div class="info-label">Picture URL</div>
+        <div class="info-value" id="info-picture-url" style="font-size: 10px;">—</div>
+    </div>
+
+    <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+</div>
+
+<script>
+    window.addEventListener('load', () => {
+        const stored = sessionStorage.getItem('line_profile');
+        if (stored) {
+            const data = JSON.parse(stored);
+            document.getElementById('display-name').textContent = data.display_name;
+            document.getElementById('info-user-id').textContent = data.user_id;
+            document.getElementById('info-picture-url').textContent = data.picture_url;
+            if (data.picture_url) document.getElementById('avatar-img').src = data.picture_url;
+        } else {
+            window.location.href = "Registration.html";
+        }
+    });
+
+    function logout() {
+        sessionStorage.clear();
+        liff.logout();
+        window.location.href = "Registration.html";
+    }
+</script>
+</body>
+</html>
